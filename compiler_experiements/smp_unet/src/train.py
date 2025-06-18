@@ -2,7 +2,6 @@
 
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
-from pytorch_lightning.profiler import PyTorchProfiler
 from torch import nn
 import segmentation_models_pytorch as smp
 import torch
@@ -41,27 +40,19 @@ class SegmentationModule(pl.LightningModule):
 
 def main():
     pl.seed_everything(42)
-    train_dl, val_dl, test_dl = get_dataloaders(batch_size=16, img_size=(256,256))
+    train_dl, val_dl, test_dl = get_dataloaders(batch_size=128, img_size=(256,256))
     model = SegmentationModule(num_classes=18, lr=1e-3)
 
-    profiler = PyTorchProfiler(
-        dirpath=".",
-        filename="pytorch_profile.txt",
-        record_shapes=True,
-        profile_memory=True,
-        with_stack=False,
-        export_to_chrome=True,
-    )
 
     trainer = Trainer(
         max_epochs=10,
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=1,
-        profiler=profiler,
+        profiler="simple",
     )
 
     trainer.fit(model, train_dl, val_dl)
-    trainer.test(model, test_dl)
+
 
 if __name__ == "__main__":
     main()
